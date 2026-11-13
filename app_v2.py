@@ -11,6 +11,26 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- CONTROL DE ACCESO SEGURO ---
+def verificar_acceso():
+    if st.session_state.get("autenticado", False):
+        return True
+    
+    st.title("🔒 Acceso Restringido • SIC HKM")
+    clave = st.text_input("Ingresa tu clave de acceso:", type="password")
+    if st.button("Ingresar", type="primary"):
+        clave_correcta = st.secrets.get("APP_PASSWORD", "HKM2026")
+        if clave == clave_correcta:
+            st.session_state["autenticado"] = True
+            st.rerun()
+        else:
+            st.error("❌ Clave incorrecta.")
+    return False
+
+if not verificar_acceso():
+    st.stop()
+# --------------------------------
+
 st.title("⚡ SIC • HKM Technology Solutions")
 st.caption("Sistema Integral de Comercialización • Evaluador Universal de Oportunidades v2.0")
 
@@ -120,14 +140,13 @@ with tab_evaluador:
             else:
                 st.error(f"🔴 **MARGEN INSUFICIENTE ({margen_pct:.1f}%)** - No absorbe comisiones.")
 
-            # Tabla de desglose
             df_res = pd.DataFrame({
                 "Rubro": ["FOB Kit", "Flete Aéreo DDP", "Comisión Amazon (15%)", "FBA Pick & Pack", "Inbound Placement", "Publicidad PPC", "TOTAL COSTO", "UTILIDAD NETA"],
                 "USD": [f"${fob_total:.2f}", f"${flete_int:.2f}", f"${comision_amz:.2f}", f"${fee_fba:.2f}", f"${fee_inbound:.2f}", f"${costo_ppc:.2f}", f"${costo_total:.2f}", f"${neto_usd:.2f}"]
             })
             st.table(df_res)
 
-        else: # COLOMBIA
+        else:
             fob_cop = fob_total * trm_actual
             flete_int_cop = (peso_total_kg * flete_aereo_cali) * trm_actual
             arancel_iva_cop = (fob_cop + flete_int_cop) * 0.29
@@ -147,7 +166,6 @@ with tab_evaluador:
             else:
                 st.error(f"🔴 **RIESGO FINANCIERO ({margen_col_pct:.1f}%)** - Costo operativo supera el mercado.")
 
-        # ESTRATEGIAS DE MITIGACIÓN
         st.subheader("🛡️ Matriz de Mitigación Requerida")
         alertas = []
         if r_comp: alertas.append(cfg.CATALOGO_MITIGACIONES["competencia_dominante"])
